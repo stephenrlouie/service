@@ -2,8 +2,6 @@ package service
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
 	"sync"
 )
 
@@ -54,33 +52,25 @@ func (sg *ServiceGroup) Start() {
 	}
 	sg.mergedChan = marge(sg.errs)
 
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-
 	sg.wg.Add(1)
 	go func() {
 		sg.wg.Done()
 	ctrl_loop:
 		for {
 			select {
-			case <-signals:
-				fmt.Printf("SIGINT detected... Exiting\n")
-				break ctrl_loop
 			case err := <-sg.mergedChan:
 				if err != nil {
-					fmt.Printf("Error: %v reported... Exiting\n", err)
 					break ctrl_loop
 				}
 			case <-sg.forceQuit:
-				fmt.Printf("Force Quit Called... Exiting\n")
 				break ctrl_loop
 			}
 		}
-		sg.StopAll()
+		sg.stopAll()
 	}()
 }
 
-func (sg *ServiceGroup) StopAll() {
+func (sg *ServiceGroup) stopAll() {
 	for _, s := range sg.svcs {
 		s.Stop()
 	}
