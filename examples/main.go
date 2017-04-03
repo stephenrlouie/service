@@ -22,7 +22,7 @@ func main() {
 
 	svc3 := &sleep.Sleep{
 		Id:      "sleep2",
-		Pass:    false,
+		Pass:    true,
 		Seconds: 2,
 	}
 	sg.Add(svc3)

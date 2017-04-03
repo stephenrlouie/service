@@ -57,7 +57,9 @@ func (sg *ServiceGroup) Start() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
+	sg.wg.Add(1)
 	go func() {
+		sg.wg.Done()
 	ctrl_loop:
 		for {
 			select {
