@@ -2,13 +2,15 @@ package hello
 
 import "fmt"
 
-type Hello struct{}
+type Hello struct {
+	Id string
+}
 
-func (h *Hello) Start(errs chan error) {
-	defer close(errs)
-	fmt.Printf("Hello world\n")
+func (h *Hello) Start() error {
+	fmt.Printf("%s says: 'Hello world'\n", h.Id)
+	return nil
 }
 
 func (h *Hello) Stop() {
-	fmt.Printf("Hello stop\n")
+	fmt.Printf("Calling hello.Id: %s stop\n", h.Id)
 }

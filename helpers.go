@@ -5,15 +5,12 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-
-	"github.com/CiscoCloud/vaquero/log"
 )
 
 type ServiceGroup struct {
 	svcs       []Service
 	wg         sync.WaitGroup
 	errs       []chan error
-	quit       chan bool
 	mergedChan chan error
 	forceQuit  chan error
 }
@@ -21,11 +18,9 @@ type ServiceGroup struct {
 func New() *ServiceGroup {
 	forceQuit := make(chan error)
 	errs := make([]chan error, 1)
-	quit := make(chan bool)
 	return &ServiceGroup{
 		errs:      errs,
 		forceQuit: forceQuit,
-		quit:      quit,
 	}
 }
 
@@ -39,26 +34,10 @@ func (sg *ServiceGroup) Wait() {
 
 func (sg *ServiceGroup) wrapSvc(svc Service, errs chan error) {
 	defer sg.wg.Done()
-	go svc.Start(errs)
-ctrl_loop:
-	for {
-		select {
-		case err := <-errs:
-			if err != nil {
-				fmt.Printf("ERROR RECEIVED FROM SVC\n")
-			}
-			break ctrl_loop
-		case <-sg.quit:
-			fmt.Printf("Quit received closing channel\n")
-			break ctrl_loop
-		}
-	}
-
-	svc.Stop()
-	for err := range errs {
-		if err != nil {
-			log.Errorf("On child shutdown: %s", err)
-		}
+	defer close(errs)
+	err := svc.Start()
+	if err != nil {
+		errs <- err
 	}
 }
 
@@ -95,8 +74,14 @@ func (sg *ServiceGroup) Start() {
 				break ctrl_loop
 			}
 		}
-		close(sg.quit)
+		sg.StopAll()
 	}()
+}
+
+func (sg *ServiceGroup) StopAll() {
+	for _, s := range sg.svcs {
+		s.Stop()
+	}
 }
 
 // Marge takes multiple channels, and returns a single channel which acts as

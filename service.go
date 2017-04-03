@@ -4,6 +4,6 @@ package service
 // Services are responsible for closing their errs channel
 // and should call Done on the provided WaitGroup on shutdown
 type Service interface {
-	Start(errs chan error)
+	Start() error
 	Stop()
 }

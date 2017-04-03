@@ -8,17 +8,20 @@ import (
 
 func main() {
 	sg := service.New()
-	svc1 := &hello.Hello{}
+	svc1 := &hello.Hello{
+		Id: "hello1",
+	}
+
 	sg.Add(svc1)
 	svc2 := &sleep.Sleep{
-		Msg:     "sleep1",
+		Id:      "sleep1",
 		Pass:    true,
-		Seconds: 20,
+		Seconds: 5,
 	}
 	sg.Add(svc2)
 
 	svc3 := &sleep.Sleep{
-		Msg:     "sleep2",
+		Id:      "sleep2",
 		Pass:    false,
 		Seconds: 2,
 	}
