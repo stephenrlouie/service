@@ -64,15 +64,15 @@ func (sg *ServiceGroup) Start() {
 		for {
 			select {
 			case <-signals:
-				fmt.Printf("SIGINT detected. Exiting\n")
+				fmt.Printf("SIGINT detected... Exiting\n")
 				break ctrl_loop
 			case err := <-sg.mergedChan:
 				if err != nil {
-					fmt.Printf("Error: %v reported. Exiting\n", err)
+					fmt.Printf("Error: %v reported... Exiting\n", err)
 					break ctrl_loop
 				}
 			case <-sg.forceQuit:
-				fmt.Printf("FORCE QUIT SENDING\n")
+				fmt.Printf("Force Quit Called... Exiting\n")
 				break ctrl_loop
 			}
 		}
