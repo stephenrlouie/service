@@ -42,6 +42,7 @@ Please see [examples](https://github.com/stephenrlouie/service/tree/master/examp
 We have two shorter running services `hello` and `sleep-2` that pass. `sleep-4` will fail, causing a ServiceGroup shutdown, `sleep-6` and `sleep-8` are still running and will be shut down, `sleep-8` will fail upon the forced shutdown and `sleep-6` will gracefully close. You can see how errors are captured in `main.go`
 
 ```
+service $go run examples/main.go
 hello says: 'Hello world'
 sleep-4!
 sleep-6!
