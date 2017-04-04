@@ -1,8 +1,8 @@
 package service
 
 import (
-	"fmt"
 	"sync"
+	"time"
 )
 
 type ServiceGroup struct {
@@ -10,16 +10,18 @@ type ServiceGroup struct {
 	wg         sync.WaitGroup
 	errs       []chan error
 	mergedChan chan error
-	forceQuit  chan error
+	forceQuit  bool
 	status     []error
+	// PollInterval is the time.Duration to wait between checking if `Kill` was called
+	PollInterval time.Duration
 }
 
 // New returns a pointer to a ServiceGroup
 // This function initializes channels
 func New() *ServiceGroup {
-	forceQuit := make(chan error)
 	return &ServiceGroup{
-		forceQuit: forceQuit,
+		forceQuit:    false,
+		PollInterval: 100 * time.Millisecond,
 	}
 }
 
@@ -37,7 +39,7 @@ func (sg *ServiceGroup) Wait() {
 // Kill is a way for the parent to force all children routines in
 // the ServiceGroup to stop
 func (sg *ServiceGroup) Kill() {
-	sg.forceQuit <- fmt.Errorf("Force Quit")
+	sg.forceQuit = true
 }
 
 // Start will begin every child routine in the ServiceGroup
@@ -56,6 +58,7 @@ func (sg *ServiceGroup) Start() {
 	sg.wg.Add(1)
 	go func() {
 		defer sg.wg.Done()
+		ticker := time.NewTicker(sg.PollInterval)
 	ctrl_loop:
 		for {
 			select {
@@ -67,8 +70,10 @@ func (sg *ServiceGroup) Start() {
 				if !ok {
 					break ctrl_loop
 				}
-			case <-sg.forceQuit:
-				break ctrl_loop
+			case <-ticker.C:
+				if sg.forceQuit {
+					break ctrl_loop
+				}
 			}
 		}
 		sg.stopAll()
