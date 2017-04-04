@@ -77,6 +77,7 @@ func (sg *ServiceGroup) Start() {
 			}
 		}
 		sg.stopAll()
+
 		// Receive any final shutdown errors
 		for err := range sg.mergedChan {
 			if err != nil {
