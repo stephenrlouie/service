@@ -33,3 +33,44 @@ A list of services to start, watch for errors and properly exit all services in 
 Catching SIGNALS is left to the user of `Service`, and Call `Kill` to force all services in the group to stop.
 
 Each child routine is expected to return one error at most. Internally each routine's error channel is merged into an error channel that has a capacity equal to the number of child routines. If the child routines pass more errors than the number of child routines the channel will fill up and crash the program.
+
+
+## Examples
+
+Please see [examples](https://github.com/stephenrlouie/service/tree/master/examples). I provide an example of short running services and long running services and a failure case.
+
+We have two shorter running services `hello` and `sleep-2` that pass. `sleep-4` will fail, causing a ServiceGroup shutdown, `sleep-6` and `sleep-8` are still running and will be shut down, `sleep-8` will fail upon the forced shutdown and `sleep-6` will gracefully close. You can see how errors are captured in `main.go`
+
+```
+service $go run examples/main.go
+hello says: 'Hello world'
+sleep-2!
+sleep-4!
+sleep-8!
+
+sleep-6!
+sleep-4!
+sleep-6!
+sleep-8!
+sleep-2!
+sleep-8!
+sleep-4!
+sleep-2 is closed
+sleep-6!
+sleep-4!
+sleep-6!
+sleep-8!
+sleep-8!
+sleep-6!
+sleep-4 is closed
+Calling hello.Id: hello stop
+sleep.Id=sleep-2 stop
+sleep.Id=sleep-4 stop
+sleep.Id=sleep-6 stop
+sleep.Id=sleep-8 stop
+sleep-6 is closed
+sleep-8 is closed
+*** Service Group Errors ***
+        0: sleep-4 fail
+        1: sleep-8 fail
+```

@@ -31,13 +31,12 @@ ctrl_loop:
 	}
 
 	if !s.Pass {
-		fmt.Printf("%s failing\n", s.Id)
 		return fmt.Errorf("%s fail", s.Id)
 	}
 	return nil
 }
 
 func (s *Sleep) Stop() {
-	fmt.Printf("Calling sleep.Id=%s stop\n", s.Id)
+	fmt.Printf("sleep.Id=%s stop\n", s.Id)
 	s.Quit = true
 }

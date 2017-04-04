@@ -18,9 +18,7 @@ type ServiceGroup struct {
 // This function initializes channels
 func New() *ServiceGroup {
 	forceQuit := make(chan error)
-	errs := make([]chan error, 1)
 	return &ServiceGroup{
-		errs:      errs,
 		forceQuit: forceQuit,
 	}
 }
@@ -61,9 +59,12 @@ func (sg *ServiceGroup) Start() {
 	ctrl_loop:
 		for {
 			select {
-			case err := <-sg.mergedChan:
+			case err, ok := <-sg.mergedChan:
 				if err != nil {
 					sg.status = append(sg.status, err)
+					break ctrl_loop
+				}
+				if !ok {
 					break ctrl_loop
 				}
 			case <-sg.forceQuit:
@@ -73,22 +74,21 @@ func (sg *ServiceGroup) Start() {
 		sg.stopAll()
 
 		// Receive any final shutdown errors
-		for _, errCh := range sg.errs {
-			if errCh != nil {
-				for err := range errCh {
-					if err != nil {
-						sg.status = append(sg.status, err)
-					}
-				}
+		for err := range sg.mergedChan {
+			if err != nil {
+				sg.status = append(sg.status, err)
 			}
 		}
 	}()
 }
 
+// Status: Returns a slice of errors that are picked up from children services
+// Errors could be initial causing fatal errors, or exit errors.
 func (sg *ServiceGroup) Status() []error {
 	return sg.status
 }
 
+// wrapSvc: a helper to deal with channels and sync.WaitGroup for user
 func (sg *ServiceGroup) wrapSvc(svc Service, errs chan error) {
 	defer sg.wg.Done()
 	defer close(errs)
@@ -98,6 +98,7 @@ func (sg *ServiceGroup) wrapSvc(svc Service, errs chan error) {
 	}
 }
 
+// stopAll - helper to call stop on all services
 func (sg *ServiceGroup) stopAll() {
 	for _, s := range sg.svcs {
 		s.Stop()
