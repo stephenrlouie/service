@@ -12,5 +12,5 @@ func (h *Hello) Start() error {
 }
 
 func (h *Hello) Stop() {
-	fmt.Printf("Calling hello.Id: %s stop\n", h.Id)
+	fmt.Printf("%s stop\n", h.Id)
 }

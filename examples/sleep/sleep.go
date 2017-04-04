@@ -37,6 +37,6 @@ ctrl_loop:
 }
 
 func (s *Sleep) Stop() {
-	fmt.Printf("sleep.Id=%s stop\n", s.Id)
+	fmt.Printf("%s stop\n", s.Id)
 	s.Quit = true
 }
