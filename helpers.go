@@ -1,25 +1,21 @@
 package service
 
-import (
-	"fmt"
-	"sync"
-)
+import "sync"
 
 type ServiceGroup struct {
 	svcs       []Service
 	wg         sync.WaitGroup
 	errs       []chan error
 	mergedChan chan error
-	forceQuit  chan error
+	forceQuit  bool
 	status     []error
 }
 
 // New returns a pointer to a ServiceGroup
 // This function initializes channels
 func New() *ServiceGroup {
-	forceQuit := make(chan error)
 	return &ServiceGroup{
-		forceQuit: forceQuit,
+		forceQuit: false,
 	}
 }
 
@@ -37,7 +33,7 @@ func (sg *ServiceGroup) Wait() {
 // Kill is a way for the parent to force all children routines in
 // the ServiceGroup to stop
 func (sg *ServiceGroup) Kill() {
-	sg.forceQuit <- fmt.Errorf("Force Quit")
+	sg.forceQuit = true
 }
 
 // Start will begin every child routine in the ServiceGroup
@@ -57,7 +53,7 @@ func (sg *ServiceGroup) Start() {
 	go func() {
 		defer sg.wg.Done()
 	ctrl_loop:
-		for {
+		for !sg.forceQuit {
 			select {
 			case err, ok := <-sg.mergedChan:
 				if err != nil {
@@ -67,12 +63,9 @@ func (sg *ServiceGroup) Start() {
 				if !ok {
 					break ctrl_loop
 				}
-			case <-sg.forceQuit:
-				break ctrl_loop
 			}
 		}
 		sg.stopAll()
-
 		// Receive any final shutdown errors
 		for err := range sg.mergedChan {
 			if err != nil {
