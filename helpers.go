@@ -53,7 +53,7 @@ func (sg *ServiceGroup) Start() {
 	go func() {
 		defer sg.wg.Done()
 	ctrl_loop:
-		for !sg.forceQuit {
+		for {
 			select {
 			case err, ok := <-sg.mergedChan:
 				if err != nil {
@@ -61,6 +61,10 @@ func (sg *ServiceGroup) Start() {
 					break ctrl_loop
 				}
 				if !ok {
+					break ctrl_loop
+				}
+			default:
+				if sg.forceQuit {
 					break ctrl_loop
 				}
 			}
