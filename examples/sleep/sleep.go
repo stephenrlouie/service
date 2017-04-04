@@ -31,7 +31,8 @@ ctrl_loop:
 	}
 
 	if !s.Pass {
-		return fmt.Errorf("Sleep fail")
+		fmt.Printf("%s failing\n", s.Id)
+		return fmt.Errorf("%s fail", s.Id)
 	}
 	return nil
 }

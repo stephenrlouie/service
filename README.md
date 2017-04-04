@@ -1,6 +1,6 @@
 # Service
 
-A utility to standardize and simplify managing go routines in a go program. It's intent is to handle channels and closing all serviceGroups specified if one of the contained services fails.
+A utility to standardize and simplify managing go routines in a go program. It's intent is to handle channels and closing all ServiceGroups specified if one of the contained services fails.
 
 Services could be long running or short running routines.
 
@@ -19,7 +19,7 @@ Responsibilities of a Service
 
 ## ServiceGroup
 
-A list of services to start, watch for errors and properly exit all services in the same serviceGroup. There should be some dependence between services in a serviceGroup since a fatal error in one of the services causes the entire ServiceGroup to shut down.
+A list of services to start, watch for errors and properly exit all services in the same ServiceGroup. There should be some dependence between services in a ServiceGroup since a fatal error in one of the services causes the entire ServiceGroup to shut down.
 
 `New` : creates a new ServiceGroup
 `Add` : adds a service to the ServiceGroup
@@ -31,3 +31,5 @@ A list of services to start, watch for errors and properly exit all services in 
 ## Other Notes
 
 Catching SIGNALS is left to the user of `Service`, and Call `Kill` to force all services in the group to stop.
+
+Each child routine is expected to return one error at most. Internally each routine's error channel is merged into an error channel that has a capacity equal to the number of child routines. If the child routines pass more errors than the number of child routines the channel will fill up and crash the program.
