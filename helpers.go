@@ -1,6 +1,9 @@
 package service
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type ServiceGroup struct {
 	svcs       []Service
@@ -9,13 +12,16 @@ type ServiceGroup struct {
 	mergedChan chan error
 	forceQuit  bool
 	status     []error
+	// PollInterval is the time.Duration to wait between checking if `Kill` was called
+	PollInterval time.Duration
 }
 
 // New returns a pointer to a ServiceGroup
 // This function initializes channels
 func New() *ServiceGroup {
 	return &ServiceGroup{
-		forceQuit: false,
+		forceQuit:    false,
+		PollInterval: 100 * time.Millisecond,
 	}
 }
 
@@ -52,6 +58,7 @@ func (sg *ServiceGroup) Start() {
 	sg.wg.Add(1)
 	go func() {
 		defer sg.wg.Done()
+		ticker := time.NewTicker(sg.PollInterval)
 	ctrl_loop:
 		for {
 			select {
@@ -63,7 +70,7 @@ func (sg *ServiceGroup) Start() {
 				if !ok {
 					break ctrl_loop
 				}
-			default:
+			case <-ticker.C:
 				if sg.forceQuit {
 					break ctrl_loop
 				}
