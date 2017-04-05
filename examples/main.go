@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 
 	"github.com/stephenrlouie/service"
 	"github.com/stephenrlouie/service/examples/hello"
@@ -10,6 +12,21 @@ import (
 
 func main() {
 	sg := service.New()
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+
+	go func() {
+	ctrl_loop:
+		for {
+			select {
+			case <-signals:
+				fmt.Printf("SIGINT Received. Shutting down...\n")
+				break ctrl_loop
+			}
+		}
+		sg.Kill()
+	}()
 
 	sg.Add(&hello.Hello{
 		Id: "hello",
