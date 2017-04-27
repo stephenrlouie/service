@@ -1,6 +1,7 @@
 # Service
 
-[![GoDoc Widget]][GoDoc]
+[![GoDoc](https://godoc.org/github.com/stephenrlouie/service?status.png)](https://godoc.org/github.com/stephenrlouie/service)
+
 
 A utility to standardize and simplify managing go routines in a go program. It's intent is to handle channels and closing all ServiceGroups specified if one of the contained services fails.
 
