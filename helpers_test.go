@@ -124,7 +124,7 @@ func TestKill(t *testing.T) {
 		{
 			// Kill after done clean
 			svc:      testSvc{t: 50 * time.Millisecond, shouldError: false, shouldPanic: true},
-			killTime: 2 * time.Second,
+			killTime: 100 * time.Millisecond,
 		},
 	}
 
