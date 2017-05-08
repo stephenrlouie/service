@@ -1,5 +1,6 @@
 # Service
 
+[![Build Status](https://travis-ci.org/stephenrlouie/service.svg?branch=master)](https://travis-ci.org/stephenrlouie/service)
 [![GoDoc](https://godoc.org/github.com/stephenrlouie/service?status.png)](https://godoc.org/github.com/stephenrlouie/service)
 
 
