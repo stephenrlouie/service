@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -96,7 +98,25 @@ func (sg *ServiceGroup) Status() []error {
 // wrapSvc: a helper to deal with channels and sync.WaitGroup for user
 func (sg *ServiceGroup) wrapSvc(svc Service, errs chan error) {
 	defer sg.wg.Done()
-	defer close(errs)
+	defer func() {
+		var err error
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			if errCast, ok := r.(error); ok {
+				err = errCast
+			} else if strCast, ok := r.(string); ok {
+				err = errors.New(strCast)
+			} else {
+				err = errors.New("Unknown panic")
+			}
+		}
+		if err != nil {
+			errs <- err
+		}
+		close(errs)
+	}()
 	err := svc.Start()
 	if err != nil {
 		errs <- err
