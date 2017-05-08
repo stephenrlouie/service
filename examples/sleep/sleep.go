@@ -8,6 +8,7 @@ import (
 type Sleep struct {
 	Id      string
 	Pass    bool
+	Panic   bool
 	Seconds int
 	Quit    bool
 }
@@ -32,6 +33,9 @@ ctrl_loop:
 
 	if !s.Pass {
 		return fmt.Errorf("%s fail", s.Id)
+	}
+	if s.Panic {
+		panic(fmt.Sprintf("%s panic", s.Id))
 	}
 	return nil
 }
