@@ -52,7 +52,8 @@ func main() {
 
 	sg.Add(&sleep.Sleep{
 		Id:      "sleep-8",
-		Pass:    false,
+		Pass:    true,
+		Panic:   true,
 		Seconds: 8,
 	})
 
