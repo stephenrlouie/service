@@ -10,6 +10,7 @@ import (
 type ServiceGroup struct {
 	svcs       []Service
 	wg         sync.WaitGroup
+	lock       sync.RWMutex
 	errs       []chan error
 	mergedChan chan error
 	forceQuit  bool
@@ -41,6 +42,8 @@ func (sg *ServiceGroup) Wait() {
 // Kill is a way for the parent to force all children routines in
 // the ServiceGroup to stop
 func (sg *ServiceGroup) Kill() {
+	sg.lock.Lock()
+	defer sg.lock.Unlock()
 	sg.forceQuit = true
 }
 
@@ -73,9 +76,12 @@ func (sg *ServiceGroup) Start() {
 					break ctrl_loop
 				}
 			case <-ticker.C:
+				sg.lock.RLock()
 				if sg.forceQuit {
+					sg.lock.RUnlock()
 					break ctrl_loop
 				}
+				sg.lock.RUnlock()
 			}
 		}
 		sg.stopAll()
