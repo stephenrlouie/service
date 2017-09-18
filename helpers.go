@@ -2,6 +2,8 @@ package service
 
 import (
 	"errors"
+	"os"
+	"os/signal"
 	"runtime"
 	"sync"
 	"time"
@@ -16,7 +18,9 @@ type ServiceGroup struct {
 	forceQuit  bool
 	status     []error
 	// PollInterval is the time.Duration to wait between checking if `Kill` was called
-	PollInterval time.Duration
+	PollInterval  time.Duration
+	sigintHandler func()
+	catchSigint   bool
 }
 
 // New returns a pointer to a ServiceGroup
@@ -47,6 +51,14 @@ func (sg *ServiceGroup) Kill() {
 	sg.forceQuit = true
 }
 
+// HandleSigint adds a listener for sigint to cancel all services.
+// if optionalHandlerFunc is specified, it will be called directly before
+// the services are canceled.
+func (sg *ServiceGroup) HandleSigint(optionalHandlerFunc func()) {
+	sg.sigintHandler = optionalHandlerFunc
+	sg.catchSigint = true
+}
+
 // Start will begin every child routine in the ServiceGroup
 // and listen on the error channels for the children routines.
 // If an error is received it will close all other routines in the
@@ -59,7 +71,10 @@ func (sg *ServiceGroup) Start() {
 		sg.errs = append(sg.errs, errs)
 	}
 	sg.mergedChan = merge(sg.errs)
-
+	signals := make(chan os.Signal, 1)
+	if sg.catchSigint {
+		signal.Notify(signals, os.Interrupt)
+	}
 	sg.wg.Add(1)
 	go func() {
 		defer sg.wg.Done()
@@ -82,6 +97,11 @@ func (sg *ServiceGroup) Start() {
 					break ctrl_loop
 				}
 				sg.lock.RUnlock()
+			case <-signals:
+				if sg.sigintHandler != nil {
+					sg.sigintHandler()
+				}
+				break ctrl_loop
 			}
 		}
 		sg.stopAll()
