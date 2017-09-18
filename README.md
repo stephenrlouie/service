@@ -25,12 +25,12 @@ Responsibilities of a Service
 
 A list of services to start, watch for errors and properly exit all services in the same ServiceGroup. There should be some dependence between services in a ServiceGroup since a fatal error in one of the services causes the entire ServiceGroup to shut down.
 
-`New` : creates a new ServiceGroup
-`Add` : adds a service to the ServiceGroup
-`Wait`: ensures the main thread will block until all services in the ServiceGroup are done running
-`Kill`: force close everything in a ServiceGroup
-`Start`: starts all the services in the ServiceGroup
-`HandleSigint`: adds a handler to stop all services on SIGINT
+- `New` : creates a new ServiceGroup
+- `Add` : adds a service to the ServiceGroup
+- `Wait`: ensures the main thread will block until all services in the ServiceGroup are done running
+- `Kill`: force close everything in a ServiceGroup
+- `Start`: starts all the services in the ServiceGroup
+- `HandleSigint`: adds a handler to stop all services on SIGINT
 
 
 ## Other Notes
