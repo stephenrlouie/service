@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 	"time"
 )
@@ -12,14 +13,17 @@ type testSvc struct {
 	shouldError bool
 	shouldPanic bool
 	stop        bool
+	sync.Mutex
 }
 
 func (ts *testSvc) Start() error {
 	for i := 0; i < 10; i++ {
 		time.Sleep(ts.t / 10)
+		ts.Lock()
 		if ts.stop {
 			break
 		}
+		ts.Unlock()
 	}
 	if ts.shouldError {
 		return fmt.Errorf("Error")
@@ -31,7 +35,9 @@ func (ts *testSvc) Start() error {
 }
 
 func (ts *testSvc) Stop() {
+	ts.Lock()
 	ts.stop = true
+	ts.Unlock()
 }
 
 func TestAdd(t *testing.T) {
@@ -73,7 +79,8 @@ func TestServices(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for i := range tests {
+		test := &tests[i]
 		sg := New()
 		sg.Add(&test.svc)
 		start := time.Now()
@@ -137,7 +144,8 @@ func TestKill(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for i := range tests {
+		test := &tests[i]
 		sg := New()
 		sg.Add(&test.svc)
 		sg.Start()
