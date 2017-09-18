@@ -30,11 +30,10 @@ A list of services to start, watch for errors and properly exit all services in 
 `Wait`: ensures the main thread will block until all services in the ServiceGroup are done running
 `Kill`: force close everything in a ServiceGroup
 `Start`: starts all the services in the ServiceGroup
+`HandleSigint`: adds a handler to stop all services on SIGINT
 
 
 ## Other Notes
-
-Catching SIGNALS is left to the user of `Service`, and Call `Kill` to force all services in the group to stop.
 
 Each child routine is expected to return one error at most. Internally each routine's error channel is merged into an error channel that has a capacity equal to the number of child routines. If the child routines pass more errors than the number of child routines the channel will fill up and crash the program.
 
