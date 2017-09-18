@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 )
@@ -10,10 +11,16 @@ type testSvc struct {
 	t           time.Duration
 	shouldError bool
 	shouldPanic bool
+	stop        bool
 }
 
-func (ts testSvc) Start() error {
-	time.Sleep(ts.t)
+func (ts *testSvc) Start() error {
+	for i := 0; i < 10; i++ {
+		time.Sleep(ts.t / 10)
+		if ts.stop {
+			break
+		}
+	}
 	if ts.shouldError {
 		return fmt.Errorf("Error")
 	}
@@ -23,18 +30,20 @@ func (ts testSvc) Start() error {
 	return nil
 }
 
-func (ts testSvc) Stop() {}
+func (ts *testSvc) Stop() {
+	ts.stop = true
+}
 
 func TestAdd(t *testing.T) {
 	s := New()
-	ts1 := testSvc{}
+	ts1 := &testSvc{}
 	s.Add(ts1)
 
 	if !contains(s.svcs, ts1) {
 		t.Error("Could not find ts1")
 	}
 
-	ts2 := testSvc{}
+	ts2 := &testSvc{}
 	s.Add(ts2)
 
 	if !contains(s.svcs, ts1) {
@@ -66,7 +75,7 @@ func TestServices(t *testing.T) {
 
 	for _, test := range tests {
 		sg := New()
-		sg.Add(test.svc)
+		sg.Add(&test.svc)
 		start := time.Now()
 		sg.Start()
 		sg.Wait()
@@ -130,7 +139,7 @@ func TestKill(t *testing.T) {
 
 	for _, test := range tests {
 		sg := New()
-		sg.Add(test.svc)
+		sg.Add(&test.svc)
 		sg.Start()
 		time.Sleep(test.killTime)
 		sg.Kill()
@@ -150,6 +159,26 @@ func TestKill(t *testing.T) {
 	}
 }
 
+func TestSigint(t *testing.T) {
+	s := New()
+	s.Add(&testSvc{t: 4 * time.Second, shouldError: false, shouldPanic: false})
+	thisShouldBecomeTrue := false
+	s.HandleSigint(func() {
+		thisShouldBecomeTrue = true
+	})
+	s.Start()
+	go func() {
+		time.Sleep(200 * time.Millisecond)
+		sigint()
+	}()
+	s.Wait()
+	if !thisShouldBecomeTrue {
+		t.Error("Sigint handler was never called...")
+	} else {
+		t.Log("Sigint successfully handled.")
+	}
+}
+
 func contains(svcs []Service, this Service) bool {
 	for _, s := range svcs {
 		if this == s {
@@ -157,4 +186,9 @@ func contains(svcs []Service, this Service) bool {
 		}
 	}
 	return false
+}
+
+func sigint() {
+	p, _ := os.FindProcess(os.Getpid())
+	p.Signal(os.Interrupt)
 }
